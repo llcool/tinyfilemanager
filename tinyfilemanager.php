@@ -68,10 +68,6 @@ $root_url = '';
 // Server hostname. Can set manually if wrong
 $http_host = $_SERVER['HTTP_HOST'];
 
-// user specific directories
-// array('Username' => 'Directory path', 'Username2' => 'Directory path', ...)
-$directories_users = array();
-
 // input encoding for iconv
 $iconv_input_encoding = 'UTF-8';
 
@@ -424,6 +420,17 @@ unset($p, $use_auth, $iconv_input_encoding, $use_highlightjs, $highlightjs_style
 /*************************** ACTIONS ***************************/
 
 // AJAX Request
+
+if (isset($_POST['ajax'])) {
+    //search : get list of files from the current folder
+    if(isset($_POST['type']) && $_POST['type']=="search") {
+        $dir = FM_ROOT_PATH;
+        $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
+        echo json_encode($response);
+        exit();
+    }
+}
+
 if (isset($_POST['ajax']) && !FM_READONLY) {
 
     // save
@@ -626,15 +633,6 @@ if (isset($_POST['ajax']) && !FM_READONLY) {
     exit();
 }
 
-if (isset($_POST['ajax'])) {
-    //search : get list of files from the current folder
-    if(isset($_POST['type']) && $_POST['type']=="search") {
-        $dir = FM_ROOT_PATH;
-        $response = scan(fm_clean_path($_POST['path']), $_POST['content']);
-        echo json_encode($response);
-        exit();
-    }
-}
 
 // Delete file / folder
 if (isset($_GET['del']) && !FM_READONLY) {
@@ -2149,9 +2147,9 @@ $tableTheme = (FM_THEME == "dark") ? "text-white bg-dark table-dark" : "bg-white
                             <?php echo lng('FullSize').': <span class="badge badge-light">'.fm_get_filesize($all_files_size).'</span>' ?>
                             <?php echo lng('File').': <span class="badge badge-light">'.$num_files.'</span>' ?>
                             <?php echo lng('Folder').': <span class="badge badge-light">'.$num_folders.'</span>' ?>
-                            <?php if (function_exists('disk_free_space') && function_exists('disk_total_space')) { ?>
+                            <!-- <?php if (function_exists('disk_free_space') && function_exists('disk_total_space')) { ?>
                             <?php echo lng('PartitionSize').': <span class="badge badge-light">'.fm_get_filesize(@disk_free_space($path)) .'</span> '.lng('FreeOf').' <span class="badge badge-light">'.fm_get_filesize(@disk_total_space($path)).'</span>'; ?>
-                            <?php } ?>
+                            <?php } ?> -->
                         </td>
                     </tr>
                 </tfoot>
@@ -3111,7 +3109,7 @@ function fm_download_file($fileLocation, $fileName, $chunkSize  = 1024)
 
     fseek($fp, $range);
 
-    while (!feof($fp) and (connection_status() == 0)) {
+    while (!@feof($fp) and (connection_status() == 0)) {
         set_time_limit(0);
         print(@fread($fp, 1024*$chunkSize));
         flush();
